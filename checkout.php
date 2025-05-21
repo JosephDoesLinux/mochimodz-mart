@@ -1,0 +1,147 @@
+<?php
+require 'config.php';
+if (empty($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+// Simple cart fetch for summary
+$c = $pdo->prepare("SELECT id FROM carts WHERE user_id = ?");
+$c->execute([$_SESSION['user_id']]);
+$cart = $c->fetch();
+
+$items = [];
+$total = 0.00;
+if ($cart) {
+    $ci = $pdo->prepare("
+      SELECT p.name, p.price, ci.quantity
+      FROM cart_items ci
+      JOIN parts p ON ci.part_id = p.id
+      WHERE ci.cart_id = ?
+    ");
+    $ci->execute([$cart['id']]);
+    $items = $ci->fetchAll();
+    foreach ($items as $it) {
+        $total += $it['price'] * $it['quantity'];
+    }
+}
+
+$showThankYou = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // In a real site you'd process payment here...
+    $showThankYou = true;
+}
+?>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout – MochiModz Mart</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <?php include 'navbar.php'; ?>
+
+  <main class="container py-5">
+    <?php if ($showThankYou): ?>
+      <div class="text-center py-5">
+        <h2>Thank You for Your Order!</h2>
+        <p class="lead">We’ve received your order and will start processing it right away.</p>
+        <a href="index.php" class="btn btn-primary mt-3">Continue Shopping</a>
+      </div>
+    <?php else: ?>
+      <h2 class="mb-4">Checkout</h2>
+      <div class="row">
+        <!-- Order Summary -->
+        <div class="col-md-5 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <strong>Order Summary</strong>
+            </div>
+            <ul class="list-group list-group-flush">
+              <?php if (empty($items)): ?>
+                <li class="list-group-item">Your cart is empty.</li>
+              <?php else: ?>
+                <?php foreach ($items as $it): ?>
+                  <li class="list-group-item d-flex justify-content-between">
+                    <span><?= htmlspecialchars($it['name']) ?> × <?= $it['quantity'] ?></span>
+                    <span>$<?= number_format($it['price'] * $it['quantity'],2) ?></span>
+                  </li>
+                <?php endforeach; ?>
+              <?php endif; ?>
+              <li class="list-group-item d-flex justify-content-between">
+                <strong>Total</strong>
+                <strong>$<?= number_format($total,2) ?></strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Shipping & Payment Form -->
+        <div class="col-md-7">
+          <form method="post">
+            <div class="mb-3">
+              <label for="fullname" class="form-label">Full Name</label>
+              <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Jane Doe" required>
+            </div>
+            <div class="mb-3">
+              <label for="address" class="form-label">Shipping Address</label>
+              <textarea class="form-control" id="address" name="address" rows="2" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email for Confirmation</label>
+              <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com" required>
+            </div>
+            <hr>
+            <h5 class="mb-3">Payment Method</h5>
+            <div class="mb-3">
+              <select class="form-select" name="payment_method" required>
+                <option value="" disabled selected>-- Select --</option>
+                <option>Credit Card</option>
+                <option>PayPal</option>
+                <option>Bank Transfer</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="ccnumber" class="form-label">Card Number</label>
+              <input type="text" class="form-control" id="ccnumber" name="ccnumber" placeholder="1234 5678 9012 3456">
+            </div>
+            <div class="row">
+              <div class="col">
+                <label for="exp" class="form-label">Expiry</label>
+                <input type="text" class="form-control" id="exp" name="exp" placeholder="MM/YY">
+              </div>
+              <div class="col">
+                <label for="cvc" class="form-label">CVC</label>
+                <input type="text" class="form-control" id="cvc" name="cvc" placeholder="123">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-success btn-lg mt-4">Confirm Order</button>
+          </form>
+        </div>
+      </div>
+    <?php endif; ?>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer mt-5 py-4" style="background-color: #FFD6E8;">
+    <div class="container-fluid text-center">
+      <p class="mb-1">&copy; <?= date('Y') ?> MochiModz Mart, Inc. All rights reserved.</p>
+      <small>
+        <a href="privacy.php">Privacy Policy</a> |
+        <a href="terms.php">Terms of Service</a> |
+        <a href="contact.php">Contact</a>
+      </small>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

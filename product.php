@@ -1,0 +1,86 @@
+<?php
+require 'config.php';
+include 'navbar.php';
+if (empty($_SESSION['user_id'])) header('Location: login.php');
+
+$id = (int)$_GET['id'];
+$stmt = $pdo->prepare("SELECT * FROM parts WHERE id = ?");
+$stmt->execute([$id]);
+$part = $stmt->fetch();
+if (!$part) exit('Part not found.');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // get or create cart
+    $uid = $_SESSION['user_id'];
+    $c = $pdo->prepare("SELECT * FROM carts WHERE user_id = ?");
+    $c->execute([$uid]);
+    $cart = $c->fetch() ?: ($pdo->prepare("INSERT INTO carts(user_id) VALUES (?)")->execute([$uid]) && $pdo->lastInsertId());
+    $cart_id = is_array($cart) ? $cart['id'] : $pdo->lastInsertId();
+    // insert or update quantity
+    $i = $pdo->prepare("INSERT INTO cart_items(cart_id, part_id) VALUES (?,?) ON DUPLICATE KEY UPDATE quantity = quantity + 1");
+    $i->execute([$cart_id, $id]);
+    header('Location: cart.php');
+    exit;
+}
+?>
+<!doctype html>
+<html lang="en">
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Font: Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+    rel="stylesheet">
+
+  <!-- Your custom styles (override below Bootstrap) -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <title><?= htmlspecialchars($part['name']) ?></title>
+</head>
+<body class="container py-5" >
+
+  <a href="index.php" class="btn btn-link">&laquo; Back to Shop</a>
+  <div class="row mt-4">
+    <div class="col-md-5">
+      <?php if($part['image']): ?><img src="images/<?= htmlspecialchars($part['image']) ?>" class="img-fluid"><?php endif; ?>
+    </div>
+    <div class="col-md-7">
+      <h2><?= htmlspecialchars($part['name']) ?></h2>
+      <p><?= nl2br(htmlspecialchars($part['description'])) ?></p>
+      <h4>$<?= number_format($part['price'],2) ?></h4>
+      <form method="post">
+        <button class="btn btn-success">Add to Cart</button>
+      </form>
+    </div>
+  </div>
+    <!-- About Us -->
+  <section class="mt-5 p-4 bg-white rounded shadow-sm">
+    <h3>About MochiModz Mart</h3>
+    <p>
+      Founded in 2025 by PC enthusiasts, MochiModz Mart is dedicated to bringing you the
+      best selection of cutting-edge components with unbeatable customer service.
+      Whether you’re overclocking your first build or assembling a high-end workstation,
+      our curated catalog and expert guides have got you covered.
+    </p>
+    <p>
+      <strong>Free shipping</strong> on orders over \$100. <strong>30-day price match guarantee.</strong>
+      Questions? <a href="contact.php">Contact our support team</a>.
+    </p>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer mt-5 py-4" style="background-color: #FFD6E8;">
+    <div class="container-fluid text-center">
+      <p class="mb-1">&copy; <?= date('Y') ?> MochiModz Mart, Inc. All rights reserved.</p>
+      <small>
+        <a href="privacy.php">Privacy Policy</a> |
+        <a href="terms.php">Terms of Service</a> |
+        <a href="contact.php">Contact</a>
+      </small>
+    </div>
+  </footer>
+</body>
+</html>
+
