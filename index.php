@@ -1,22 +1,72 @@
+<!-- /**
+ * Main Shop Page - MochiModz Mart
+ * 
+ * This is the primary landing page for the PC components e-commerce website.
+ * It handles product listing and category filtering functionality.
+ * 
+ * Features:
+ * - User authentication check
+ * - Category-based product filtering
+ * - Product listing with images and basic details
+ * - Responsive layout using Bootstrap 5
+ * 
+ * Page Sections:
+ * - Hero section with main call-to-action
+ * - Featured categories grid with icons
+ * - Product listing with filtering capability
+ * - About Us section
+ * - Footer with links
+ * 
+ * Security Features:
+ * - Session-based authentication
+ * - SQL injection prevention using PDO prepared statements
+ * - XSS prevention using htmlspecialchars()
+ * 
+ * Dependencies:
+ * - config.php: Database configuration and connection
+ * - navbar.php: Navigation bar component
+ * - Bootstrap 5.3.0
+ * - Google Fonts (Poppins)
+ * - Custom CSS (styles.css)
+ * 
+ * @requires PHP >= 7.0
+ * @requires PDO
+ * @category E-commerce
+ * @package  MochiModz
+ * @author   [Your Name]
+ * @license  [License Information]
+  * @author     Joseph Abou Antoun 52330567
+
+ */ -->
 <?php
+// Include database configuration and establish connection
 require 'config.php';
+
+// Check if user is logged in, redirect to login page if not
 if (empty($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
+  header('Location: login.php');
+  exit;
 }
 
-// Categories list (used in navbar and featured section)
+// Define available product categories array
+// Used in both navigation and featured categories section
 $cats = ['CPU','GPU','RAM','Motherboard','Storage','Cooler'];
 
-// Fetch parts (all or by selected category)
+// Database query to fetch parts
+// If category parameter exists and is valid, fetch parts from that category
+// Otherwise fetch all parts
 if (!empty($_GET['cat']) && in_array($_GET['cat'], $cats, true)) {
-    $stmt = $pdo->prepare("SELECT * FROM parts WHERE category = ?");
-    $stmt->execute([$_GET['cat']]);
+  // Prepare parameterized query for security against SQL injection
+  $stmt = $pdo->prepare("SELECT * FROM parts WHERE category = ?");
+  $stmt->execute([$_GET['cat']]);
 } else {
-    $stmt = $pdo->query("SELECT * FROM parts");
+  // No category filter - fetch all parts
+  $stmt = $pdo->query("SELECT * FROM parts");
 }
+// Fetch all results into $parts array
 $parts = $stmt->fetchAll();
 ?>
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -24,10 +74,10 @@ $parts = $stmt->fetchAll();
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MochiModz Mart Shop</title>
 
-  <!-- Bootstrap CSS -->
+  <!-- Load Bootstrap CSS framework -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- Google Font: Poppins -->
+  <!-- Setup Google Fonts - Poppins with different weights -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -113,7 +163,7 @@ $parts = $stmt->fetchAll();
   <!-- Footer -->
   <footer class="footer mt-auto py-4 text-center">
     <div class="container">
-      <p class="mb-1">&copy; <?= date('Y') ?> MochiModz Mart, Inc. All rights reserved.</p>
+      <p class="mb-1">&copy; <?= date('Y') ?> MochiModz Mart, Inc. All rights reserved. Joseph Abou Antoun 52330567</p>
       <small>
         <a href="privacy.php">Privacy Policy</a> |
         <a href="terms.php">Terms of Service</a> |
