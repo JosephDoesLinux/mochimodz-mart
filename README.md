@@ -1,5 +1,7 @@
 # MochiModz PC Shop
 
+https://mochimodz-mart.lovestoblog.com/
+
 A PHP e-commerce website for PC parts and components. Built as a university project.
 
 ## Features
@@ -19,7 +21,7 @@ A PHP e-commerce website for PC parts and components. Built as a university proj
 ## Installation
 
 1. Clone the repository
-2. Import the database schema from `db/schema.sql`
+2. Import the database schema from `pcshop.sql`
 3. Configure database connection in `config.php`
 4. Start your web server
 5. Access through browser
